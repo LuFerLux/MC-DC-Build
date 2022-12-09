@@ -1,0 +1,41 @@
+spring:
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOSTRAP_SERVER:localhost:9093}
+    listener:
+      concurrency: 1
+    consumer:
+      group-id: ${KAFKA_GROUP_ID:grupo1}
+      auto-offset-reset: latest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+
+  jpa:
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQL5Dialect
+    hibernate:
+      ddl-auto: none
+      naming:
+        physical-strategy: org.hibernate.boot.model.naming.PhysicalNamingStrategyStandardImpl
+
+  datasource:
+    url: jdbc:mysql://${DATASOURCE_HOST}:${DATASOURCE_PORT}/${DATASOURCE_DATABASE}?useUnicode=true&characterEncoding=utf8&useSSL=false&requireSSL=false
+    username: ${DATASOURCE_USER}
+    password: ${DATASOURCE_PWD}
+
+  devtools:
+    livereload:
+      enabled: true
+    restart:
+      enabled: true
+
+students:
+  topics:
+    average: "alumnos_notas"
+
+logging:
+  level:
+    root: INFO
+#    org:
+#      springframework:
+#        kafka: INFO

@@ -1,0 +1,93 @@
+version: '3.4'
+
+networks:
+  network-db:
+    driver: bridge
+
+services:
+  zookeeper:
+    container_name: zookeeper
+    hostname: zookeeper
+    image: confluentinc/cp-zookeeper:6.1.1
+    networks:
+      - network-db
+    ports:
+      - "2181:2181"
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+
+  kafka:
+    container_name: kafka
+    hostname: kafka
+    image: confluentinc/cp-kafka:6.1.1
+    networks:
+      - network-db
+    depends_on:
+      - zookeeper
+    ports:
+      - 9092:9092
+      - 19092:19092
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,CONNECTIONS_FROM_HOST://localhost:19092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,CONNECTIONS_FROM_HOST:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+
+  server-bd:
+    build: ./server-bd/
+    image: luferlux/mc-sbd-students
+    networks:
+      - network-db
+    environment:
+      - MARIADB_ROOT_HOST=%
+      - MARIADB_DATABASE=students
+      - MARIADB_ROOT_PASSWORD=toor
+#    volumes:
+#      - ./my-data:/var/lib/mysql/
+    ports:
+      - "3306:3306"
+    restart: on-failure
+    command: --default-authentication-plugin=mysql_native_password
+
+  app-consumer:
+    build: ./app-consumer/
+    image: luferlux/app-consumer
+    networks:
+      - network-db
+    environment:
+      - JAVA_OPTS=""
+      - KAFKA_BOOSTRAP_SERVER=kafka:9092
+      - KAFKA_GROUP_ID=group01
+      - DATASOURCE_HOST=server-bd
+      - DATASOURCE_PORT=3306
+      - DATASOURCE_DATABASE=students
+      - DATASOURCE_USER=root
+      - DATASOURCE_PWD=toor
+    depends_on:
+      - server-bd
+      - kafka
+    links:
+      - server-bd:db
+      - kafka:stream
+    ports:
+      - "8080:8080"
+    restart: on-failure
+
+  app-producer:
+    build: ./app-producer/
+    image: luferlux/app-producer
+    networks:
+      - network-db
+    environment:
+      - JAVA_OPTS=""
+      - KAFKA_BOOSTRAP_SERVER=kafka:9092
+    depends_on:
+      - kafka
+    links:
+      - kafka:stream
+    ports:
+      - "8090:8080"
+    restart: on-failure

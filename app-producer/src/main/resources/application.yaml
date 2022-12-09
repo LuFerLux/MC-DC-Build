@@ -1,0 +1,33 @@
+spring:
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOSTRAP_SERVER:localhost:9093}
+#    properties:
+#      security:
+#        protocol: SASL_PLAINTEXT
+#        sasl:
+#          mechanism: PLAIN
+#          jaas:
+#            config: org.apache.kafka.common.security.plain.PlainLoginModule required username="producer" password="producer-secret";
+
+    producer:
+      acks: 1
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+
+
+  devtools:
+    livereload:
+      enabled: true
+    restart:
+      enabled: true
+
+students:
+  topics:
+    average: "alumnos_notas"
+
+logging:
+  level:
+    root: INFO
+#    org:
+#      springframework:
+#        kafka: INFO
